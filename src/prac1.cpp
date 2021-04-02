@@ -4,6 +4,8 @@
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <geometry_msgs/Point.h>
+
 using namespace cv;
 Mat Erode,Dilate,output;
 class ImageConverter
@@ -11,7 +13,6 @@ class ImageConverter
   ros::NodeHandle nh_;
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
-  image_transport::Publisher image_pub_;
   ros::Publisher cob_point;
   geometry_msgs::Point vel;
 public:
@@ -21,7 +22,7 @@ public:
     // Subscrive to input video feed and publish output video feed
     image_sub_ = it_.subscribe("/usb_cam/image_raw", 1,
       &ImageConverter::imageCb, this);
-    cob_point = it_.advertise<geometry_msgs::Point>("cobo_point", 10);
+    cob_point = nh_.advertise<geometry_msgs::Point>("/cobo_point", 10);
     //namedWindow(OPENCV_WINDOW);
   }
   ~ImageConverter()
@@ -53,13 +54,12 @@ public:
     circle( cv_ptr->image, mc, 15, Scalar(100), 2, 4);
     imshow("OutImage", cv_ptr->image);
 
-    waitKey(3);
-    image_pub_.publish(cv_ptr->toImageMsg());
-
-    vel.x=1;
-    vel.y=2;
-    vel.y=3;
+    vel.x=mc.x;
+    vel.y=mc.y;
+    vel.z=0;
     cob_point.publish(vel);
+
+    waitKey(3);
   }
 };
 int main(int argc, char** argv)
